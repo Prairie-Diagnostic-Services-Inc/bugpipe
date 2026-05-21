@@ -96,7 +96,8 @@ sed -i 's,_assembly.fasta,,g' "$SEROout"
 # -------------------------
 if [[ -n "${vfdb:-}" && "${vfdb}" != "None" ]]; then
     if [[ "$vf_type" == "builtin" ]]; then
-        abricate --db "$vfdb" -minid 90 -mincov 80 --quiet "$Consensus" > "$VFOut"
+        abricate --db "$vfdb" -minid 90 -mincov 80 --quiet "$Consensus" > "$VFOut"_tmp
+        awk -F'\t' 'BEGIN{OFS=FS} NR>1 && $15=="" && match($14, /\[([^][]+)\][[:space:]]*\[[^][]+\]$/, a) {$15=a[1]} 1' "$VFOut"_tmp > "${VFOut}_tmp2" && mv "${VFOut}_tmp2" "$VFOut"
     else
         # custom database
         abricate --datadir "$VFDB_DIR" --db "$vfdb" -minid 90 -mincov 80 --quiet "$Consensus" > "$VFOut"
