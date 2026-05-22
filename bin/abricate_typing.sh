@@ -96,15 +96,76 @@ sed -i 's,_assembly.fasta,,g' "$SEROout"
 # -------------------------
 if [[ -n "${vfdb:-}" && "${vfdb}" != "None" ]]; then
     if [[ "$vf_type" == "builtin" ]]; then
-        abricate --db "$vfdb" -minid 90 -mincov 80 --quiet "$Consensus" > "$VFOut"_tmp
-        awk -F'\t' 'BEGIN{OFS=FS} NR>1 && $15=="" && match($14, /\[([^][]+)\][[:space:]]*\[[^][]+\]$/, a) {$15=a[1]} 1' "$VFOut"_tmp > "${VFOut}_tmp2" && mv "${VFOut}_tmp2" "$VFOut"
+        abricate --db "$vfdb" -minid 90 -mincov 80 --quiet "$Consensus" > "${SampleName}_vfdb.txt"
+        awk -F'\t' '
+            BEGIN { OFS=FS }
+            
+            # 1. Skip and print the header line exactly as-is
+            NR == 1 { print; next }
+            
+            # 2. Process data lines where column 15 is blank or missing completely
+            $15 == "" || NF < 15 {
+                
+                # Split column 14 using the open bracket "[" as a field splitter
+                # parts[2] will contain everything inside the first bracket group onward
+                if (split($14, parts, "[") > 1) {
+                    val = parts[2]
+                    
+                    # Strip off the closing bracket "]" and everything after it
+                    sub(/\].*$/, "", val)
+                    
+                    # Place the isolated text into column 15
+                    $15 = val
+                } else {
+                    # Fallback if there are no brackets at all in column 14 (like our "None" row)
+                    $15 = "None"
+                }
+                
+                # Force awk to rebuild the row layout with the 15th column tab intact
+                $1 = $1
+            }
+            
+            # Print the line
+            1
+        ' "${SampleName}_vfdb.txt" > "$VFOut"
     else
         # custom database
         abricate --datadir "$VFDB_DIR" --db "$vfdb" -minid 90 -mincov 80 --quiet "$Consensus" > "$VFOut"
     fi
 else
     # Species not in table → run default VFDB search
-    abricate --db vfdb "$Consensus" > "$VFOut"
+    abricate --db vfdb "$Consensus" > "${SampleName}_vfdb.txt"
+        awk -F'\t' '
+            BEGIN { OFS=FS }
+            
+            # 1. Skip and print the header line exactly as-is
+            NR == 1 { print; next }
+            
+            # 2. Process data lines where column 15 is blank or missing completely
+            $15 == "" || NF < 15 {
+                
+                # Split column 14 using the open bracket "[" as a field splitter
+                # parts[2] will contain everything inside the first bracket group onward
+                if (split($14, parts, "[") > 1) {
+                    val = parts[2]
+                    
+                    # Strip off the closing bracket "]" and everything after it
+                    sub(/\].*$/, "", val)
+                    
+                    # Place the isolated text into column 15
+                    $15 = val
+                } else {
+                    # Fallback if there are no brackets at all in column 14 (like our "None" row)
+                    $15 = "None"
+                }
+                
+                # Force awk to rebuild the row layout with the 15th column tab intact
+                $1 = $1
+            }
+            
+            # Print the line
+            1
+        ' "${SampleName}_vfdb.txt" > "$VFOut"
 fi
 
 # Append default line if only header

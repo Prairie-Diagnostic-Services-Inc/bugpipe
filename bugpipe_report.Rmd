@@ -16,9 +16,27 @@ params:
   .nav-pills>li>a:hover, .nav-pills>li>a:focus, .nav-pills>li.active>a,     .nav-pills>li.active>a:hover, .nav-pills>li.active>a:focus{
      background-color: darkblue;
      }
+
+/* Force all tables to stretch across the empty space */
+table, .table {
+    width: 100% !important;
+    max-width: 100% !important;
+    table-layout: auto;
+    margin-bottom: 25px;
+}
+
+/* Add breathing room to cells and keep data on one line where possible */
+th, td {
+    padding: 10px 14px !important;
+    text-align: left;
+    white-space: nowrap; 
+}
+
+/* Allow ONLY the final column (Virulence Factor/Description) to wrap text */
+td:last-child {
+    white-space: normal;
+}
 ```
-
-
 <br>
 
 ### TYPING,AMR,VF and BUSCO RESULTS {.tabset .tabset-pills}
